@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Pixel Snake</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game-container">
+    <div id="hud">
+      <span id="score-display">SCORE: 0000</span>
+      <span id="best-display">BEST: 0000</span>
+      <span id="level-display">LV: 1</span>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <div id="overlay" class="visible">
+      <div id="overlay-content">
+        <h1 id="overlay-title">PIXEL SNAKE</h1>
+        <p id="overlay-subtitle"></p>
+        <div id="difficulty-select">
+          <button class="diff-btn" data-diff="easy">EASY</button>
+          <button class="diff-btn active" data-diff="normal">NORMAL</button>
+          <button class="diff-btn" data-diff="hard">HARD</button>
+        </div>
+        <p id="overlay-instructions">WASD / Arrow Keys to move<br>SPACE to pause</p>
+        <button id="overlay-btn">START</button>
+      </div>
+    </div>
+
+    <div id="touch-controls">
+      <div class="touch-row">
+        <button class="touch-btn" data-dir="UP">▲</button>
+      </div>
+      <div class="touch-row">
+        <button class="touch-btn" data-dir="LEFT">◄</button>
+        <button class="touch-btn" data-dir="DOWN">▼</button>
+        <button class="touch-btn" data-dir="RIGHT">►</button>
+      </div>
+    </div>
+
+    <div id="bottom-bar">
+      <button id="sound-btn" title="Toggle Sound">🔊</button>
+      <button id="pause-btn" title="Pause">⏸</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
