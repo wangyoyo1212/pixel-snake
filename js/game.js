@@ -1,10 +1,10 @@
 import { Snake } from './snake.js';
 import { Food } from './food.js';
-import { Renderer } from './renderer.js';
+import { Renderer, getSkinList } from './renderer.js';
 import { InputHandler } from './input.js';
 import { ParticleSystem } from './particles.js';
 import { playEat, playDie, isSoundEnabled, toggleSound } from './audio.js';
-import { getBestScore, setBestScore, getDifficulty, setDifficulty } from './storage.js';
+import { getBestScore, setBestScore, getDifficulty, setDifficulty, getSkin, setSkin } from './storage.js';
 
 const GRID_W = 20;
 const GRID_H = 20;
@@ -49,12 +49,15 @@ export class Game {
     this.lastTime = 0;
     this.deathTimer = 0;
     this.deathDuration = 800;
+    this.effectTimer = 0;
+    this.baseTickInterval = 150;
 
     this._updateHUD();
     this._updateBestDisplay();
     this._setupUI();
     this._setupInput();
     this._applyDifficulty(getDifficulty());
+    this._applySkin(getSkin());
 
     this.input.enable();
     this._loop(0);
@@ -67,6 +70,7 @@ export class Game {
     this.overlayBtn = document.getElementById('overlay-btn');
     this.overlayInstructions = document.getElementById('overlay-instructions');
     this.diffBtns = document.querySelectorAll('.diff-btn');
+    this.skinBtns = document.querySelectorAll('.skin-btn');
     this.soundBtn = document.getElementById('sound-btn');
     this.pauseBtn = document.getElementById('pause-btn');
 
@@ -79,6 +83,16 @@ export class Game {
         const diff = btn.dataset.diff;
         setDifficulty(diff);
         this._applyDifficulty(diff);
+      });
+    });
+
+    this.skinBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.skinBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const skin = btn.dataset.skin;
+        setSkin(skin);
+        this._applySkin(skin);
       });
     });
 
@@ -137,6 +151,10 @@ export class Game {
     this.difficultyOffset = offset;
   }
 
+  _applySkin(skin) {
+    this.renderer.setSkin(skin);
+  }
+
   _getTickInterval() {
     let interval = SPEED_TABLE[0].interval;
     for (const tier of SPEED_TABLE) {
@@ -144,7 +162,11 @@ export class Game {
         interval = tier.interval;
       }
     }
-    return Math.max(50, interval + (this.difficultyOffset || 0));
+    let result = Math.max(50, interval + (this.difficultyOffset || 0));
+    if (this.effectTimer > 0) {
+      result = this.baseTickInterval;
+    }
+    return result;
   }
 
   _getLevel() {
@@ -159,9 +181,11 @@ export class Game {
     this.score = 0;
     this.level = 1;
     this.tickInterval = this._getTickInterval();
+    this.baseTickInterval = this.tickInterval;
     this.tickAccumulator = 0;
     this.particles.clear();
     this.deathTimer = 0;
+    this.effectTimer = 0;
 
     const occupied = this.snake.getOccupiedSet();
     this.food.spawn(occupied);
@@ -213,6 +237,7 @@ export class Game {
     const isGameOver = this.state === State.GAMEOVER;
     this.overlayInstructions.style.display = (isMenu || isGameOver) ? 'block' : 'none';
     document.getElementById('difficulty-select').style.display = isMenu ? 'flex' : 'none';
+    document.getElementById('skin-select').style.display = isMenu ? 'flex' : 'none';
   }
 
   _hideOverlay() {
@@ -241,16 +266,31 @@ export class Game {
 
     const head = this.snake.getHead();
     if (this.food.isAt(head.x, head.y)) {
-      this.snake.grow();
-      this.score += 10;
+      const growAmount = this.food.getGrowAmount();
+      for (let i = 0; i < growAmount; i++) {
+        this.snake.grow();
+      }
+      this.score += this.food.getScore();
       this.level = this._getLevel();
+
+      const effect = this.food.getEffect();
+      if (effect === 'speed') {
+        this.baseTickInterval = Math.max(40, this.tickInterval - 40);
+        this.effectTimer = 5000;
+      } else if (effect === 'slow') {
+        this.baseTickInterval = this.tickInterval + 50;
+        this.effectTimer = 5000;
+      } else {
+        this.baseTickInterval = this._getTickInterval();
+        this.effectTimer = 0;
+      }
       this.tickInterval = this._getTickInterval();
 
       const cs = this.renderer.cellSize;
       this.particles.emit(
         this.food.x * cs + cs / 2,
         this.food.y * cs + cs / 2,
-        '#ff4757',
+        this.food.getParticleColor(),
         12
       );
 
@@ -276,6 +316,15 @@ export class Game {
     this.lastTime = timestamp;
 
     if (this.state === State.PLAYING) {
+      if (this.effectTimer > 0) {
+        this.effectTimer -= dt;
+        if (this.effectTimer <= 0) {
+          this.effectTimer = 0;
+          this.baseTickInterval = this._getTickInterval();
+          this.tickInterval = this.baseTickInterval;
+        }
+      }
+
       this.tickAccumulator += dt;
       while (this.tickAccumulator >= this.tickInterval) {
         this._tick();

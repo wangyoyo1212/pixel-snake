@@ -170,6 +170,47 @@ body {
   transform: scale(1.05);
 }
 
+#skin-select {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.select-label {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--color-muted);
+  margin-right: 4px;
+}
+
+.skin-btn {
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s;
+  filter: grayscale(0.6);
+}
+
+.skin-btn:hover {
+  border-color: var(--color-primary);
+  filter: grayscale(0.3);
+}
+
+.skin-btn.active {
+  border-color: var(--color-primary);
+  background: rgba(0, 255, 136, 0.1);
+  filter: grayscale(0);
+}
+
 #touch-controls {
   display: none;
   flex-direction: column;

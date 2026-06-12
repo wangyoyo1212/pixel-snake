@@ -1,14 +1,51 @@
+const SKINS = {
+  classic: {
+    snakeHead: '#00ff88',
+    snakeBody: '#00cc6e',
+    snakeBodyAlt: '#00aa5c',
+    snakeEye: '#0f0e17',
+    deathHead: '#ff4757',
+    deathBody: '#cc2233',
+  },
+  fire: {
+    snakeHead: '#ff6b35',
+    snakeBody: '#e74c3c',
+    snakeBodyAlt: '#c0392b',
+    snakeEye: '#0f0e17',
+    deathHead: '#8b0000',
+    deathBody: '#5c0000',
+  },
+  ice: {
+    snakeHead: '#74b9ff',
+    snakeBody: '#0984e3',
+    snakeBodyAlt: '#0652dd',
+    snakeEye: '#0f0e17',
+    deathHead: '#636e72',
+    deathBody: '#2d3436',
+  },
+  gold: {
+    snakeHead: '#ffd700',
+    snakeBody: '#f1c40f',
+    snakeBodyAlt: '#d4ac0d',
+    snakeEye: '#0f0e17',
+    deathHead: '#e67e22',
+    deathBody: '#d35400',
+  },
+  purple: {
+    snakeHead: '#e056fd',
+    snakeBody: '#be2edd',
+    snakeBodyAlt: '#9b59b6',
+    snakeEye: '#0f0e17',
+    deathHead: '#8e44ad',
+    deathBody: '#6c3483',
+  },
+};
+
 const COLORS = {
   bg: '#1a1a2e',
   grid: '#22223a',
   wall: '#3d3d5c',
   wallHighlight: '#52527a',
-  snakeHead: '#00ff88',
-  snakeBody: '#00cc6e',
-  snakeBodyAlt: '#00aa5c',
-  snakeEye: '#0f0e17',
-  food: '#ff4757',
-  foodHighlight: '#ff6b7a',
   score: '#00ff88',
 };
 
@@ -21,7 +58,16 @@ export class Renderer {
     this.cellSize = 0;
     this.offsetX = 0;
     this.offsetY = 0;
+    this.skin = 'classic';
     this.resize();
+  }
+
+  setSkin(skinName) {
+    this.skin = skinName;
+  }
+
+  getSkinColors() {
+    return SKINS[this.skin] || SKINS.classic;
   }
 
   resize() {
@@ -86,15 +132,16 @@ export class Renderer {
   drawSnake(snake) {
     const cs = this.cellSize;
     const pad = Math.max(1, cs * 0.08);
+    const skin = this.getSkinColors();
 
     for (let i = snake.body.length - 1; i >= 0; i--) {
       const seg = snake.body[i];
       const isHead = i === 0;
       const color = isHead
-        ? COLORS.snakeHead
+        ? skin.snakeHead
         : i % 2 === 0
-          ? COLORS.snakeBody
-          : COLORS.snakeBodyAlt;
+          ? skin.snakeBody
+          : skin.snakeBodyAlt;
 
       this.ctx.fillStyle = color;
       this.ctx.fillRect(
@@ -135,7 +182,8 @@ export class Renderer {
         break;
     }
 
-    this.ctx.fillStyle = COLORS.snakeEye;
+    const skin = this.getSkinColors();
+    this.ctx.fillStyle = skin.snakeEye;
     this.ctx.fillRect(Math.floor(e1x - eyeSize / 2), Math.floor(e1y - eyeSize / 2), eyeSize, eyeSize);
     this.ctx.fillRect(Math.floor(e2x - eyeSize / 2), Math.floor(e2y - eyeSize / 2), eyeSize, eyeSize);
   }
@@ -147,7 +195,7 @@ export class Renderer {
     const cy = food.y * cs + cs / 2;
     const halfSize = (cs * 0.4) * scale;
 
-    this.ctx.fillStyle = COLORS.food;
+    this.ctx.fillStyle = food.getColor();
     this.ctx.fillRect(
       Math.floor(cx - halfSize),
       Math.floor(cy - halfSize),
@@ -155,7 +203,7 @@ export class Renderer {
       Math.ceil(halfSize * 2)
     );
 
-    this.ctx.fillStyle = COLORS.foodHighlight;
+    this.ctx.fillStyle = food.getHighlightColor();
     const hlSize = halfSize * 0.4;
     this.ctx.fillRect(
       Math.floor(cx - halfSize + 2),
@@ -164,26 +212,66 @@ export class Renderer {
       Math.ceil(hlSize)
     );
 
-    this.ctx.fillStyle = '#2ecc71';
+    this.ctx.fillStyle = food.getStemColor();
     this.ctx.fillRect(
       Math.floor(cx - 1),
       Math.floor(cy - halfSize - cs * 0.12),
       Math.ceil(cs * 0.12),
       Math.ceil(cs * 0.12)
     );
+
+    if (food.foodType.type === 'golden') {
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.globalAlpha = 0.6;
+      const sparkleSize = cs * 0.08;
+      this.ctx.fillRect(
+        Math.floor(cx + halfSize * 0.3 - sparkleSize / 2),
+        Math.floor(cy - halfSize * 0.3 - sparkleSize / 2),
+        sparkleSize,
+        sparkleSize
+      );
+      this.ctx.globalAlpha = 1;
+    }
+
+    if (food.foodType.type === 'speed') {
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.globalAlpha = 0.7;
+      const boltSize = cs * 0.15;
+      this.ctx.fillRect(
+        Math.floor(cx - boltSize / 2),
+        Math.floor(cy - boltSize * 1.2),
+        boltSize,
+        boltSize * 2.4
+      );
+      this.ctx.globalAlpha = 1;
+    }
+
+    if (food.foodType.type === 'slow') {
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.globalAlpha = 0.7;
+      const dotSize = cs * 0.1;
+      this.ctx.fillRect(
+        Math.floor(cx - dotSize / 2),
+        Math.floor(cy - dotSize / 2),
+        dotSize,
+        dotSize
+      );
+      this.ctx.globalAlpha = 1;
+    }
   }
 
   drawDeathEffect(snake, progress) {
     const cs = this.cellSize;
     const pad = Math.max(1, cs * 0.08);
     const visibleCount = Math.floor(snake.body.length * (1 - progress));
+    const skin = this.getSkinColors();
 
     for (let i = snake.body.length - 1; i >= 0; i--) {
       if (i >= visibleCount) continue;
       const seg = snake.body[i];
       const alpha = 0.3 + 0.7 * ((visibleCount - i) / visibleCount);
       this.ctx.globalAlpha = alpha;
-      this.ctx.fillStyle = i % 2 === 0 ? '#ff4757' : '#cc2233';
+      this.ctx.fillStyle = i % 2 === 0 ? skin.deathHead : skin.deathBody;
       this.ctx.fillRect(
         seg.x * cs + pad,
         seg.y * cs + pad,
@@ -193,4 +281,8 @@ export class Renderer {
     }
     this.ctx.globalAlpha = 1;
   }
+}
+
+export function getSkinList() {
+  return Object.keys(SKINS);
 }

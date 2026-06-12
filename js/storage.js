@@ -2,6 +2,7 @@ const STORAGE_KEYS = {
   BEST_SCORE: 'snake_best_score',
   SOUND_ENABLED: 'snake_sound_enabled',
   DIFFICULTY: 'snake_difficulty',
+  SKIN: 'snake_skin',
 };
 
 export function getBestScore() {
@@ -27,4 +28,12 @@ export function getDifficulty() {
 
 export function setDifficulty(diff) {
   localStorage.setItem(STORAGE_KEYS.DIFFICULTY, diff);
+}
+
+export function getSkin() {
+  return localStorage.getItem(STORAGE_KEYS.SKIN) || 'classic';
+}
+
+export function setSkin(skin) {
+  localStorage.setItem(STORAGE_KEYS.SKIN, skin);
 }
