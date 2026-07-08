@@ -49,6 +49,37 @@ const COLORS = {
   score: '#00ff88',
 };
 
+const SEASONS = {
+  spring: {
+    bg: '#2d3a2d',
+    grid: '#3d4a3d',
+    wall: '#4a5a4a',
+    wallHighlight: '#5e705e',
+    deco: ['#ff9ecd', '#ffb7dd', '#7ee08a', '#9cf0a6'],
+  },
+  summer: {
+    bg: '#1a3a4a',
+    grid: '#2a4a5a',
+    wall: '#3d5a6a',
+    wallHighlight: '#4f6f7f',
+    deco: ['#ffd93d', '#6bcb77', '#4d96ff', '#ffffff'],
+  },
+  autumn: {
+    bg: '#3d2a1e',
+    grid: '#4d3a2e',
+    wall: '#5c4638',
+    wallHighlight: '#6f5646',
+    deco: ['#e67e22', '#d35400', '#c0392b', '#f1c40f'],
+  },
+  winter: {
+    bg: '#1e2a3a',
+    grid: '#2e3a4a',
+    wall: '#3d4a5a',
+    wallHighlight: '#4f5d6f',
+    deco: ['#dfe6e9', '#b2bec3', '#74b9ff', '#a29bfe'],
+  },
+};
+
 export class Renderer {
   constructor(canvas, gridW, gridH) {
     this.canvas = canvas;
@@ -59,6 +90,7 @@ export class Renderer {
     this.offsetX = 0;
     this.offsetY = 0;
     this.skin = 'classic';
+    this.season = 'spring';
     this.resize();
   }
 
@@ -68,6 +100,14 @@ export class Renderer {
 
   getSkinColors() {
     return SKINS[this.skin] || SKINS.classic;
+  }
+
+  setSeason(seasonName) {
+    this.season = seasonName;
+  }
+
+  getSeasonColors() {
+    return SEASONS[this.season] || SEASONS.spring;
   }
 
   resize() {
@@ -86,12 +126,14 @@ export class Renderer {
   }
 
   clear() {
-    this.ctx.fillStyle = COLORS.bg;
+    const colors = this.getSeasonColors();
+    this.ctx.fillStyle = colors.bg;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   drawGrid() {
-    this.ctx.fillStyle = COLORS.grid;
+    const colors = this.getSeasonColors();
+    this.ctx.fillStyle = colors.grid;
     for (let x = 0; x < this.gridW; x++) {
       for (let y = 0; y < this.gridH; y++) {
         if ((x + y) % 2 === 0) {
@@ -108,13 +150,14 @@ export class Renderer {
 
   drawWalls() {
     const cs = this.cellSize;
-    this.ctx.fillStyle = COLORS.wall;
+    const colors = this.getSeasonColors();
+    this.ctx.fillStyle = colors.wall;
     this.ctx.fillRect(0, 0, this.canvas.width, cs / 4);
     this.ctx.fillRect(0, this.canvas.height - cs / 4, this.canvas.width, cs / 4);
     this.ctx.fillRect(0, 0, cs / 4, this.canvas.height);
     this.ctx.fillRect(this.canvas.width - cs / 4, 0, cs / 4, this.canvas.height);
 
-    this.ctx.fillStyle = COLORS.wallHighlight;
+    this.ctx.fillStyle = colors.wallHighlight;
     for (let x = 0; x < this.gridW; x++) {
       if (x % 2 === 0) {
         this.ctx.fillRect(x * cs, 0, cs, cs / 4);
@@ -125,6 +168,42 @@ export class Renderer {
       if (y % 2 === 0) {
         this.ctx.fillRect(0, y * cs, cs / 4, cs);
         this.ctx.fillRect(this.canvas.width - cs / 4, y * cs, cs / 4, cs);
+      }
+    }
+  }
+
+  drawSeasonDecorations() {
+    const colors = this.getSeasonColors();
+    const cs = this.cellSize;
+    const deco = colors.deco;
+    const ctx = this.ctx;
+
+    for (let x = 0; x < this.gridW; x++) {
+      for (let y = 0; y < this.gridH; y++) {
+        if ((x * 7 + y * 13) % 23 !== 0) continue;
+        if (x === 0 || y === 0 || x === this.gridW - 1 || y === this.gridH - 1) continue;
+
+        const cx = x * cs;
+        const cy = y * cs;
+        const color = deco[(x + y) % deco.length];
+        ctx.fillStyle = color;
+
+        if (this.season === 'spring') {
+          ctx.fillRect(cx + cs * 0.25, cy + cs * 0.25, cs * 0.5, cs * 0.5);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(cx + cs * 0.375, cy + cs * 0.375, cs * 0.25, cs * 0.25);
+        } else if (this.season === 'summer') {
+          ctx.fillRect(cx + cs * 0.3, cy + cs * 0.2, cs * 0.4, cs * 0.6);
+          ctx.fillStyle = '#2d6a4f';
+          ctx.fillRect(cx + cs * 0.1, cy + cs * 0.6, cs * 0.8, cs * 0.2);
+        } else if (this.season === 'autumn') {
+          ctx.fillRect(cx + cs * 0.2, cy + cs * 0.3, cs * 0.6, cs * 0.4);
+          ctx.fillRect(cx + cs * 0.4, cy + cs * 0.1, cs * 0.2, cs * 0.8);
+        } else if (this.season === 'winter') {
+          const flake = cs * 0.35;
+          ctx.fillRect(cx + cs * 0.5 - flake * 0.5, cy + cs * 0.15, flake, cs * 0.7);
+          ctx.fillRect(cx + cs * 0.15, cy + cs * 0.5 - flake * 0.5, cs * 0.7, flake);
+        }
       }
     }
   }
@@ -285,4 +364,8 @@ export class Renderer {
 
 export function getSkinList() {
   return Object.keys(SKINS);
+}
+
+export function getSeasonList() {
+  return Object.keys(SEASONS);
 }

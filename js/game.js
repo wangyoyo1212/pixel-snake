@@ -4,7 +4,7 @@ import { Renderer, getSkinList } from './renderer.js';
 import { InputHandler } from './input.js';
 import { ParticleSystem } from './particles.js';
 import { playEat, playDie, isSoundEnabled, toggleSound } from './audio.js';
-import { getBestScore, setBestScore, getDifficulty, setDifficulty, getSkin, setSkin } from './storage.js';
+import { getBestScore, setBestScore, getDifficulty, setDifficulty, getSkin, setSkin, getSeason, setSeason } from './storage.js';
 
 const GRID_W = 20;
 const GRID_H = 20;
@@ -58,6 +58,7 @@ export class Game {
     this._setupInput();
     this._applyDifficulty(getDifficulty());
     this._applySkin(getSkin());
+    this._applySeason(getSeason());
 
     this.input.enable();
     this._loop(0);
@@ -71,6 +72,7 @@ export class Game {
     this.overlayInstructions = document.getElementById('overlay-instructions');
     this.diffBtns = document.querySelectorAll('.diff-btn');
     this.skinBtns = document.querySelectorAll('.skin-btn');
+    this.seasonBtns = document.querySelectorAll('.season-btn');
     this.soundBtn = document.getElementById('sound-btn');
     this.pauseBtn = document.getElementById('pause-btn');
 
@@ -93,6 +95,16 @@ export class Game {
         const skin = btn.dataset.skin;
         setSkin(skin);
         this._applySkin(skin);
+      });
+    });
+
+    this.seasonBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.seasonBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const season = btn.dataset.season;
+        setSeason(season);
+        this._applySeason(season);
       });
     });
 
@@ -153,6 +165,13 @@ export class Game {
 
   _applySkin(skin) {
     this.renderer.setSkin(skin);
+  }
+
+  _applySeason(season) {
+    this.renderer.setSeason(season);
+    this.seasonBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.season === season);
+    });
   }
 
   _getTickInterval() {
@@ -238,6 +257,7 @@ export class Game {
     this.overlayInstructions.style.display = (isMenu || isGameOver) ? 'block' : 'none';
     document.getElementById('difficulty-select').style.display = isMenu ? 'flex' : 'none';
     document.getElementById('skin-select').style.display = isMenu ? 'flex' : 'none';
+    document.getElementById('season-select').style.display = isMenu ? 'flex' : 'none';
   }
 
   _hideOverlay() {
@@ -349,6 +369,7 @@ export class Game {
   _render() {
     this.renderer.clear();
     this.renderer.drawGrid();
+    this.renderer.drawSeasonDecorations();
     this.renderer.drawWalls();
 
     if (this.state === State.DYING) {

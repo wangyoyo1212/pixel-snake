@@ -3,6 +3,7 @@ const STORAGE_KEYS = {
   SOUND_ENABLED: 'snake_sound_enabled',
   DIFFICULTY: 'snake_difficulty',
   SKIN: 'snake_skin',
+  SEASON: 'snake_season',
 };
 
 export function getBestScore() {
@@ -36,4 +37,12 @@ export function getSkin() {
 
 export function setSkin(skin) {
   localStorage.setItem(STORAGE_KEYS.SKIN, skin);
+}
+
+export function getSeason() {
+  return localStorage.getItem(STORAGE_KEYS.SEASON) || 'spring';
+}
+
+export function setSeason(season) {
+  localStorage.setItem(STORAGE_KEYS.SEASON, season);
 }
