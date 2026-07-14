@@ -4,7 +4,39 @@ const STORAGE_KEYS = {
   DIFFICULTY: 'snake_difficulty',
   SKIN: 'snake_skin',
   SEASON: 'snake_season',
+  LEADERBOARD: 'snake_leaderboard',
 };
+
+const LEADERBOARD_MAX = 10;
+
+export function getLeaderboard() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEYS.LEADERBOARD) || '[]');
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addLeaderboardEntry(score, difficulty) {
+  const board = getLeaderboard();
+  const entry = {
+    score,
+    difficulty,
+    date: new Date().toLocaleDateString('zh-CN'),
+  };
+  board.push(entry);
+  board.sort((a, b) => b.score - a.score);
+  const trimmed = board.slice(0, LEADERBOARD_MAX);
+  localStorage.setItem(STORAGE_KEYS.LEADERBOARD, JSON.stringify(trimmed));
+  return trimmed;
+}
+
+export function isHighScore(score) {
+  const board = getLeaderboard();
+  if (board.length < LEADERBOARD_MAX) return true;
+  return score > board[board.length - 1].score;
+}
 
 export function getBestScore() {
   return parseInt(localStorage.getItem(STORAGE_KEYS.BEST_SCORE) || '0', 10);

@@ -4,7 +4,7 @@ import { Renderer, getSkinList } from './renderer.js';
 import { InputHandler } from './input.js';
 import { ParticleSystem } from './particles.js';
 import { playEat, playDie, isSoundEnabled, toggleSound } from './audio.js';
-import { getBestScore, setBestScore, getDifficulty, setDifficulty, getSkin, setSkin, getSeason, setSeason } from './storage.js';
+import { getBestScore, setBestScore, getDifficulty, setDifficulty, getSkin, setSkin, getSeason, setSeason, getLeaderboard, addLeaderboardEntry, isHighScore } from './storage.js';
 
 const GRID_W = 20;
 const GRID_H = 20;
@@ -75,6 +75,10 @@ export class Game {
     this.seasonBtns = document.querySelectorAll('.season-btn');
     this.soundBtn = document.getElementById('sound-btn');
     this.pauseBtn = document.getElementById('pause-btn');
+    this.leaderboardBtn = document.getElementById('leaderboard-btn');
+    this.leaderboardPanel = document.getElementById('leaderboard-panel');
+    this.leaderboardList = document.getElementById('leaderboard-list');
+    this.leaderboardClose = document.getElementById('leaderboard-close');
 
     this.overlayBtn.addEventListener('click', () => this._onAction('START'));
 
@@ -116,6 +120,14 @@ export class Game {
     this.pauseBtn.addEventListener('click', () => {
       if (this.state === State.PLAYING) this._onAction('PAUSE');
       else if (this.state === State.PAUSED) this._onAction('PAUSE');
+    });
+
+    this.leaderboardBtn.addEventListener('click', () => {
+      this._showLeaderboard();
+    });
+
+    this.leaderboardClose.addEventListener('click', () => {
+      this._hideLeaderboard();
     });
 
     window.addEventListener('resize', () => {
@@ -240,6 +252,10 @@ export class Game {
       setBestScore(this.bestScore);
       this._updateBestDisplay();
     }
+    // 分数大于 0 时写入排行榜
+    if (this.score > 0) {
+      addLeaderboardEntry(this.score, getDifficulty());
+    }
     const subtitle = isNewBest
       ? `NEW RECORD! ${this.score}`
       : `Score: ${this.score}`;
@@ -274,6 +290,34 @@ export class Game {
   _updateBestDisplay() {
     document.getElementById('best-display').textContent =
       `BEST: ${String(this.bestScore).padStart(4, '0')}`;
+  }
+
+  _showLeaderboard() {
+    const board = getLeaderboard();
+    this.leaderboardList.innerHTML = '';
+
+    if (board.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = '暂无记录，快来挑战吧！';
+      this.leaderboardList.appendChild(empty);
+    } else {
+      const diffNames = { easy: 'EASY', normal: 'NORM', hard: 'HARD' };
+      board.forEach((entry, i) => {
+        const li = document.createElement('li');
+        li.innerHTML =
+          `<span class="rank">#${i + 1}</span>` +
+          `<span class="score">${String(entry.score).padStart(4, '0')}</span>` +
+          `<span class="diff">${diffNames[entry.difficulty] || 'NORM'}</span>`;
+        this.leaderboardList.appendChild(li);
+      });
+    }
+
+    this.leaderboardPanel.classList.remove('hidden');
+  }
+
+  _hideLeaderboard() {
+    this.leaderboardPanel.classList.add('hidden');
   }
 
   _tick() {
@@ -328,6 +372,9 @@ export class Game {
 
   _win() {
     this.state = State.GAMEOVER;
+    if (this.score > 0) {
+      addLeaderboardEntry(this.score, getDifficulty());
+    }
     this._showOverlay('YOU WIN!', `Score: ${this.score}`, 'RESTART');
   }
 
